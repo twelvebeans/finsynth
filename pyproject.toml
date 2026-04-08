@@ -2,14 +2,13 @@
 name = "finsynth"
 version = "0.1.0"
 description = "Organic, internally consistent synthetic personal finance data generator"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{name = "Eric Avdey", email = "eiri@eiri.ca"}]
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [
     "numpy>=1.26",
     "pandas>=2.2",
-    "faker>=25.0",
     "pydantic>=2.7",
     "rich>=13.7",
     "typer>=0.12",
