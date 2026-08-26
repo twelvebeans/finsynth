@@ -1,0 +1,28 @@
+[tools]
+python = "3.12"
+
+[env]
+UV_PROJECT_ENVIRONMENT = ".venv"
+
+[tasks.install]
+run = "uv sync --all-extras"
+
+[tasks.test]
+run = "uv run pytest tests/ -x -v"
+
+[tasks.lint]
+run = ["uv run ruff format --check src/", "uv run ruff check src/", "uv run mypy src/"]
+
+[tasks.fmt]
+run = "uv run ruff format src/"
+
+[tasks.example]
+run = "uv run python -m finsynth.cli"
+
+[tasks.check]
+run = """
+uv run ruff format --check -s src/
+uv run ruff check src/
+uv run mypy src/
+uv run pytest tests/ -x
+"""
