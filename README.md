@@ -51,8 +51,8 @@ mise run install   # uv sync
 # 24 months, average earner, CAD 4,500/month
 finsynth generate --months 24 --seed 42
 
-# Spender profile, higher income, JSON output, custom start date
-finsynth generate --months 36 --start-date 2022-01-01 --income 7000 --lifestyle spender --format json --output ./data
+# Spender profile, higher income, JSON output, custom date range
+finsynth generate --start-date 2022-01-01 --end-date 2025-01-01 --income 7000 --lifestyle spender --format json --output ./data
 
 # Rustledger-compatible Beancount output
 finsynth generate --format ledger --output ./data
@@ -63,17 +63,18 @@ finsynth demo
 
 **All CLI options:**
 
-| Option          | Default  | Description                         |
-| --------------- | -------- | ----------------------------------- |
-| `--months`      | 24       | Simulation length in months         |
-| `--seed`        | 42       | Random seed (same seed = same data) |
-| `--income`      | 4500     | Monthly income                      |
-| `--lifestyle`   | average  | `frugal` / `average` / `spender`    |
-| `--income-type` | salary   | `salary` / `freelance`              |
+| Option          | Default    | Description                          |
+| --------------- | ---------- | ------------------------------------ |
+| `--months`      | 24         | Simulation length in months          |
+| `--seed`        | 42         | Random seed (same seed = same data)  |
+| `--income`      | 4500       | Monthly income                       |
+| `--lifestyle`   | average    | `frugal` / `average` / `spender`     |
+| `--income-type` | salary     | `salary` / `freelance`               |
 | `--start-date`  | 2023-01-01 | Simulation start date (`YYYY-MM-DD`) |
-| `--currency`    | CAD      | ISO currency code                   |
-| `--output`      | ./output | Output directory                    |
-| `--format`      | csv      | `csv` / `json` / `ledger` / `all`   |
+| `--end-date`    | unset      | Simulation end date (`YYYY-MM-DD`)   |
+| `--currency`    | CAD        | ISO currency code                    |
+| `--output`      | ./output   | Output directory                     |
+| `--format`      | csv        | `csv` / `json` / `ledger` / `all`    |
 
 ### Python API
 

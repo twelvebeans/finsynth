@@ -3,7 +3,7 @@ finsynth CLI
 
 Usage:
     finsynth generate --months 24 --seed 42 --lifestyle average --output ./data
-    finsynth generate --start-date 2022-01-01 --income 6000 --lifestyle spender --format json
+    finsynth generate --start-date 2022-01-01 --end-date 2023-01-01 --income 6000
     finsynth generate --format ledger
     finsynth summary ./data/finsynth_transactions.csv
 """
@@ -32,7 +32,9 @@ console = Console()
 
 @app.command()
 def generate(
-    months: int = typer.Option(24, help="Number of months to simulate"),
+    months: int | None = typer.Option(
+        None, help="Number of months to simulate (default: 24 when --end-date is omitted)"
+    ),
     seed: int = typer.Option(42, help="Random seed for reproducibility"),
     income: float = typer.Option(4500.0, help="Monthly income in currency units"),
     lifestyle: LifestyleProfile = typer.Option(
@@ -40,6 +42,9 @@ def generate(
     ),
     income_type: str = typer.Option("salary", help="salary | freelance"),
     start_date: str = typer.Option("2023-01-01", help="Simulation start date (YYYY-MM-DD)"),
+    end_date: str | None = typer.Option(
+        None, help="Simulation end date (YYYY-MM-DD); mutually exclusive with --months"
+    ),
     currency: str = typer.Option("CAD", help="ISO currency code"),
     output: Path = typer.Option(Path("./output"), help="Output directory"),
     fmt: str = typer.Option("csv", "--format", help="csv | json | ledger | all"),
@@ -51,9 +56,24 @@ def generate(
     except ValueError as exc:
         raise typer.BadParameter("start-date must use YYYY-MM-DD format") from exc
 
-    end_year = start.year + (start.month + months - 2) // 12
-    end_month = (start.month + months - 2) % 12 + 1
-    end = date(end_year, end_month, 28)
+    if end_date is not None:
+        if months is not None:
+            raise typer.BadParameter("--end-date is mutually exclusive with --months")
+        try:
+            end = date.fromisoformat(end_date)
+        except ValueError as exc:
+            raise typer.BadParameter("end-date must use YYYY-MM-DD format") from exc
+        if end <= start:
+            raise typer.BadParameter("end-date must be at least one day after start-date")
+        duration = "custom date range"
+    else:
+        months = 24 if months is None else months
+        if months < 1:
+            raise typer.BadParameter("months must be at least 1")
+        end_year = start.year + (start.month + months - 2) // 12
+        end_month = (start.month + months - 2) % 12 + 1
+        end = date(end_year, end_month, 28)
+        duration = f"{months} months"
 
     config = PersonaConfig(
         monthly_income=income,
@@ -65,7 +85,7 @@ def generate(
         seed=seed,
     )
 
-    console.print(f"\n[bold]finsynth[/bold] — generating {months} months of data")
+    console.print(f"\n[bold]finsynth[/bold] — generating {duration} of data")
     console.print(f"  Persona   : income={income} {currency}, lifestyle={lifestyle}, seed={seed}")
     console.print(f"  Date range: {start} → {end}\n")
 

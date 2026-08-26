@@ -69,6 +69,59 @@ class TestCli:
         assert result.exit_code == 0
         assert "Date range: 2022-03-15 → 2022-03-28" in result.output
 
+    def test_generate_accepts_end_date(self, cli_runner: CliRunner, tmp_path):
+        result = cli_runner.invoke(
+            app,
+            [
+                "generate",
+                "--start-date",
+                "2022-03-15",
+                "--end-date",
+                "2022-04-01",
+                "--output",
+                str(tmp_path),
+                "--format",
+                "csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "Date range: 2022-03-15 → 2022-04-01" in result.output
+
+    def test_generate_rejects_end_date_with_months(self, cli_runner: CliRunner, tmp_path):
+        result = cli_runner.invoke(
+            app,
+            [
+                "generate",
+                "--months",
+                "1",
+                "--end-date",
+                "2022-04-01",
+                "--output",
+                str(tmp_path),
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "mutually exclusive" in result.output
+
+    def test_generate_rejects_end_date_before_start_date(self, cli_runner: CliRunner, tmp_path):
+        result = cli_runner.invoke(
+            app,
+            [
+                "generate",
+                "--start-date",
+                "2022-03-15",
+                "--end-date",
+                "2022-03-15",
+                "--output",
+                str(tmp_path),
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "at least one day after start-date" in result.output
+
 
 # ---------------------------------------------------------------------------
 # Account model tests
