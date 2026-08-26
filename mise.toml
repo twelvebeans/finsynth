@@ -7,6 +7,9 @@ UV_PROJECT_ENVIRONMENT = ".venv"
 [tasks.install]
 run = "uv sync --all-extras"
 
+[tasks.bump]
+run = "uv sync -U --all-extras"
+
 [tasks.test]
 run = "uv run pytest tests/ -x -v"
 
