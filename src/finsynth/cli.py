@@ -3,7 +3,7 @@ finsynth CLI
 
 Usage:
     finsynth generate --months 24 --seed 42 --lifestyle average --output ./data
-    finsynth generate --income 6000 --lifestyle spender --format json
+    finsynth generate --start-date 2022-01-01 --income 6000 --lifestyle spender --format json
     finsynth generate --format ledger
     finsynth summary ./data/finsynth_transactions.csv
 """
@@ -39,13 +39,18 @@ def generate(
         LifestyleProfile.AVERAGE, help="frugal | average | spender"
     ),
     income_type: str = typer.Option("salary", help="salary | freelance"),
+    start_date: str = typer.Option("2023-01-01", help="Simulation start date (YYYY-MM-DD)"),
     currency: str = typer.Option("CAD", help="ISO currency code"),
     output: Path = typer.Option(Path("./output"), help="Output directory"),
     fmt: str = typer.Option("csv", "--format", help="csv | json | ledger | all"),
 ) -> None:
     """Generate a synthetic transaction history for one persona."""
 
-    start = date(2023, 1, 1)
+    try:
+        start = date.fromisoformat(start_date)
+    except ValueError as exc:
+        raise typer.BadParameter("start-date must use YYYY-MM-DD format") from exc
+
     end_year = start.year + (start.month + months - 2) // 12
     end_month = (start.month + months - 2) % 12 + 1
     end = date(end_year, end_month, 28)

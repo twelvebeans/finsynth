@@ -6,17 +6,23 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from typer.testing import CliRunner
 
 from finsynth.accounts.factory import build_account_set
 from finsynth.accounts.models import AccountType
-from finsynth.engine.config import PersonaConfig, LifestyleProfile
+from finsynth.cli import app
+from finsynth.engine.config import LifestyleProfile, PersonaConfig
 from finsynth.engine.simulation import Simulation
-from finsynth.output.serialisers import export_ledger, transactions_to_df, snapshots_to_df, summary
-
+from finsynth.output.serialisers import export_ledger, snapshots_to_df, summary, transactions_to_df
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
+@pytest.fixture
+def cli_runner() -> CliRunner:
+    return CliRunner()
+
 
 @pytest.fixture
 def default_config() -> PersonaConfig:
@@ -37,6 +43,31 @@ def simulation(default_config: PersonaConfig) -> Simulation:
 @pytest.fixture
 def run_output(simulation: Simulation):
     return simulation.run()
+
+
+# ---------------------------------------------------------------------------
+# CLI tests
+# ---------------------------------------------------------------------------
+
+class TestCli:
+    def test_generate_accepts_start_date(self, cli_runner: CliRunner, tmp_path):
+        result = cli_runner.invoke(
+            app,
+            [
+                "generate",
+                "--months",
+                "1",
+                "--start-date",
+                "2022-03-15",
+                "--output",
+                str(tmp_path),
+                "--format",
+                "csv",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "Date range: 2022-03-15 → 2022-03-28" in result.output
 
 
 # ---------------------------------------------------------------------------
