@@ -54,6 +54,9 @@ finsynth generate --months 24 --seed 42
 # Spender profile, higher income, JSON output
 finsynth generate --months 36 --income 7000 --lifestyle spender --format json --output ./data
 
+# Rustledger-compatible Beancount output
+finsynth generate --format ledger --output ./data
+
 # Print a summary without writing any files
 finsynth demo
 ```
@@ -69,7 +72,7 @@ finsynth demo
 | `--income-type` | salary   | `salary` / `freelance`              |
 | `--currency`    | CAD      | ISO currency code                   |
 | `--output`      | ./output | Output directory                    |
-| `--format`      | csv      | `csv` / `json` / `both`             |
+| `--format`      | csv      | `csv` / `json` / `ledger` / `all`   |
 
 ### Python API
 
@@ -128,6 +131,8 @@ export_csv(transactions, snapshots, output_dir="./data", prefix="persona_1")
 | `account_type` | str   | checking / savings / credit_card |
 | `date`         | date  | Snapshot date                    |
 | `balance`      | float | End-of-day balance               |
+
+`finsynth.beancount` is a Rustledger-compatible Beancount ledger.
 
 ### Transaction categories
 

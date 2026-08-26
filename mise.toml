@@ -17,7 +17,7 @@ run = ["uv run ruff format --check src/", "uv run ruff check src/", "uv run mypy
 run = "uv run ruff format src/"
 
 [tasks.example]
-run = "uv run python -m finsynth.cli"
+run = "uv run python -m finsynth.cli generate --format all"
 
 [tasks.check]
 run = """

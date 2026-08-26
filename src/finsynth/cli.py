@@ -4,6 +4,7 @@ finsynth CLI
 Usage:
     finsynth generate --months 24 --seed 42 --lifestyle average --output ./data
     finsynth generate --income 6000 --lifestyle spender --format json
+    finsynth generate --format ledger
     finsynth summary ./data/finsynth_transactions.csv
 """
 
@@ -19,7 +20,7 @@ from rich.table import Table
 
 from finsynth.engine.config import LifestyleProfile, PersonaConfig
 from finsynth.engine.simulation import Simulation
-from finsynth.output.serialisers import export_csv, export_json, summary
+from finsynth.output.serialisers import export_csv, export_json, export_ledger, summary
 
 app = typer.Typer(
     name="finsynth",
@@ -40,7 +41,7 @@ def generate(
     income_type: str = typer.Option("salary", help="salary | freelance"),
     currency: str = typer.Option("CAD", help="ISO currency code"),
     output: Path = typer.Option(Path("./output"), help="Output directory"),
-    fmt: str = typer.Option("csv", "--format", help="csv | json | both"),
+    fmt: str = typer.Option("csv", "--format", help="csv | json | ledger | all"),
 ) -> None:
     """Generate a synthetic transaction history for one persona."""
 
@@ -71,14 +72,21 @@ def generate(
 
     # Write output
     output.mkdir(parents=True, exist_ok=True)
-    if fmt in ("csv", "both"):
+    formats = {"csv", "json", "ledger", "all"}
+    if fmt not in formats:
+        raise typer.BadParameter("format must be csv, json, ledger, or all")
+
+    if fmt in ("csv", "all"):
         t_path, s_path = export_csv(transactions, snapshots, output)
         console.print(f"[green]✓[/green] Transactions → {t_path}")
         console.print(f"[green]✓[/green] Snapshots    → {s_path}")
-    if fmt in ("json", "both"):
+    if fmt in ("json", "all"):
         t_path, s_path = export_json(transactions, snapshots, output)
         console.print(f"[green]✓[/green] Transactions → {t_path}")
         console.print(f"[green]✓[/green] Snapshots    → {s_path}")
+    if fmt in ("ledger", "all"):
+        path = export_ledger(transactions, snapshots, output, currency=currency)
+        console.print(f"[green]✓[/green] Ledger       → {path}")
 
     _print_summary(stats)
 

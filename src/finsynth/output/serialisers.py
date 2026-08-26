@@ -8,6 +8,7 @@ into pandas DataFrames, CSV files, or JSON.
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pandas as pd
@@ -109,6 +110,102 @@ def export_json(
     snap_path.write_text(json.dumps(snapshots, indent=2))
 
     return txn_path, snap_path
+
+
+def export_ledger(
+    transactions: list[Transaction],
+    snapshots: list[dict],
+    output_dir: str | Path = ".",
+    prefix: str = "finsynth",
+    currency: str = "CAD",
+) -> Path:
+    """Write a Rustledger-compatible Beancount ledger file."""
+    del snapshots
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / f"{prefix}.beancount"
+
+    lines = [
+        'option "title" "finsynth synthetic ledger"',
+        f'option "operating_currency" "{currency}"',
+        "",
+    ]
+
+    if not transactions:
+        path.write_text("\n".join(lines))
+        return path
+
+    txns = sorted(transactions, key=lambda t: (t.date, t.id))
+    open_date = txns[0].date.isoformat()
+    accounts = sorted({account for t in txns for account, _ in _postings(t)})
+
+    # Accounts must be opened before Rustledger can post to them.
+    for account in accounts:
+        lines.append(f"{open_date} open {account} {currency}")
+    lines.append("")
+
+    for txn in txns:
+        lines.append(f'{txn.date.isoformat()} * "{_escape(txn.description)}"')
+        for account, amount in _postings(txn):
+            lines.append(f"  {account:<32} {_amount(amount)} {currency}")
+        lines.append("")
+
+    path.write_text("\n".join(lines))
+    return path
+
+
+def _postings(txn: Transaction) -> list[tuple[str, Decimal]]:
+    amount = txn.amount
+    category = txn.category.value
+
+    if category in {"salary", "bonus", "freelance"}:
+        return [
+            (_account(txn.to_account_id, category), amount),
+            (_income_account(category), -amount),
+        ]
+
+    if txn.to_account_id == "acc_external":
+        return [
+            (_expense_account(category), amount),
+            (_account(txn.from_account_id, category), -amount),
+        ]
+
+    return [
+        (_account(txn.to_account_id, category), amount),
+        (_account(txn.from_account_id, category), -amount),
+    ]
+
+
+def _account(account_id: str, category: str) -> str:
+    accounts = {
+        "acc_checking": "Assets:Checking",
+        "acc_savings": "Assets:Savings",
+        "acc_cc": "Liabilities:CreditCard",
+        "acc_income": _income_account(category),
+        "acc_external": _expense_account(category),
+    }
+    return accounts.get(account_id, _expense_account(category))
+
+
+def _income_account(category: str) -> str:
+    return f"Income:{_account_part(category)}"
+
+
+def _expense_account(category: str) -> str:
+    return f"Expenses:{_account_part(category)}"
+
+
+def _account_part(value: str) -> str:
+    return "".join(part.capitalize() for part in value.split("_"))
+
+
+def _amount(amount: Decimal) -> str:
+    return f"{amount.quantize(Decimal('0.01'))}"
+
+
+def _escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
 # ---------------------------------------------------------------------------

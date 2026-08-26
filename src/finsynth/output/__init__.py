@@ -1,6 +1,7 @@
 from finsynth.output.serialisers import (
     export_csv,
     export_json,
+    export_ledger,
     snapshots_to_df,
     summary,
     transactions_to_df,
@@ -11,5 +12,6 @@ __all__ = [
     "snapshots_to_df",
     "export_csv",
     "export_json",
+    "export_ledger",
     "summary",
 ]

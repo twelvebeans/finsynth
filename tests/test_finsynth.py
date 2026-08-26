@@ -11,7 +11,7 @@ from finsynth.accounts.factory import build_account_set
 from finsynth.accounts.models import AccountType
 from finsynth.engine.config import PersonaConfig, LifestyleProfile
 from finsynth.engine.simulation import Simulation
-from finsynth.output.serialisers import transactions_to_df, snapshots_to_df, summary
+from finsynth.output.serialisers import export_ledger, transactions_to_df, snapshots_to_df, summary
 
 
 # ---------------------------------------------------------------------------
@@ -218,6 +218,25 @@ class TestSerialisers:
         for key in ("transaction_count", "total_income", "total_spending",
                     "spending_by_category", "final_balances"):
             assert key in stats
+
+    def test_export_ledger_file(self, run_output, tmp_path):
+        transactions, snapshots = run_output
+        path = export_ledger(transactions, snapshots, tmp_path)
+        text = path.read_text()
+
+        assert path.name == "finsynth.beancount"
+        assert 'option "operating_currency" "CAD"' in text
+        assert "open Assets:Checking CAD" in text
+        assert "* " in text
+
+    def test_export_ledger_mappings(self, run_output, tmp_path):
+        transactions, snapshots = run_output
+        path = export_ledger(transactions, snapshots, tmp_path)
+        text = path.read_text()
+
+        assert "Income:Salary" in text
+        assert "Expenses:Groceries" in text
+        assert "Liabilities:CreditCard" in text
 
     def test_inflation_raises_grocery_cost(self):
         """
